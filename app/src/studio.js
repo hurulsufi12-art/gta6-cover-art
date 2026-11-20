@@ -1,234 +1,293 @@
-// Golden Hour Cover Studio — studio.js
-// The studio model: the cover state, the photo tray, and undo / redo.
-// The state is plain JSON, so every edit is a snapshot push and every undo
-// step is a snapshot restore. Photos live outside the state (they are
-// images, not JSON) and are referenced by tray index.
+// Golden Hour Cover Studio — the editor.
+//
+// Owns the page state (layout, grade, size, caption, the photo pool and one
+// slot per panel), paints the live preview through render.js, and handles
+// picking a panel, dragging it to pan, scrolling it to zoom, loading photos
+// from the machine and exporting the finished cover as a PNG.
 
-import { LAYOUTS, panelsForLayout } from './render.js';
+import { SIZES, GRADES, LAYOUTS, layoutById, gradeById, sizeById, drawCover, defaultPanels } from './render.js';
 
-export const SAMPLE_PHOTOS = [
-  { name: 'boulevard', label: 'Boulevard', src: 'samples/boulevard.jpg' },
-  { name: 'pier', label: 'Pier', src: 'samples/pier.jpg' },
+const SAMPLES = [
+  { id: 'boulevard', name: 'Boulevard', src: 'samples/boulevard.jpg' },
+  { id: 'pier', name: 'Pier', src: 'samples/pier.jpg' },
 ];
 
-export function defaultState() {
+export function freshState() {
   return {
-    layout: 'magazine',
-    grade: 'gold',
+    layout: 'hero-split',
+    grade: 'vice-sunset',
+    size: 'wide',
     title: 'GOLDEN HOUR',
-    subtitle: 'Vice City nights, your story',
-    place: 'Leonida • 2026',
-    titleStyle: 'solid',
-    size: 'square',
-    stickers: { stars: true, est: true, pin: true },
-    panels: {},
+    subtitle: 'A Vice City story',
+    panels: defaultPanels(9, 2),
+    selected: 0,
   };
 }
 
-// Fill in panel placements for the state's layout: every panel gets the
-// first photo by default, keeping any placement the panel already had.
-export function ensurePanels(state, photoCount) {
-  const { panels } = panelsForLayout(state.layout, 100, 100);
-  const next = {};
-  for (const panel of panels) {
-    const old = state.panels[panel.id];
-    next[panel.id] = old ?? { photo: photoCount > 0 ? 0 : null, ox: 0, oy: 0, zoom: 1 };
-  }
-  state.panels = next;
-  return state;
+export function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`could not load ${src}`));
+    img.src = src;
+  });
 }
 
-export function cloneState(state) {
-  return JSON.parse(JSON.stringify(state));
-}
+export function createStudio(root) {
+  const state = freshState();
+  const photos = []; // pool: Image objects, index = panel slot's .photo
+  const photoNames = [];
+  const $ = (sel) => root.querySelector(sel);
+  const preview = $('#preview');
+  const pctx = preview.getContext('2d');
 
-export function createStudio(onChange) {
-  const studio = {
-    state: ensurePanels(defaultState(), 0),
-    photos: [],
-    selectedPhoto: 0,
-    history: [],
-    historyIndex: -1,
-    onChange: onChange ?? (() => {}),
-  };
+  let ready = Promise.resolve();
+  let rendered = 0;
 
-  function commit() {
-    // A new edit drops whatever redo steps were waiting.
-    studio.history = studio.history.slice(0, studio.historyIndex + 1);
-    studio.history.push(JSON.stringify(studio.state));
-    if (studio.history.length > 80) studio.history.shift();
-    studio.historyIndex = studio.history.length - 1;
-    studio.onChange();
+  function panelCount() {
+    return layoutById(state.layout).panels().length;
   }
 
-  function restore(snapshot) {
-    studio.state = ensurePanels(JSON.parse(snapshot), studio.photos.length);
-    studio.onChange();
+  function paint() {
+    const size = sizeById(state.size);
+    const scale = Math.min(760 / size.w, 520 / size.h);
+    preview.width = Math.round(size.w * scale);
+    preview.height = Math.round(size.h * scale);
+    drawCover(pctx, preview.width, preview.height, state, photos);
+    rendered++;
+    // Selection outline, drawn in preview pixels.
+    const panels = layoutById(state.layout).panels();
+    const p = panels[state.selected];
+    if (p) {
+      pctx.save();
+      pctx.strokeStyle = '#00e5ff';
+      pctx.lineWidth = 3;
+      pctx.setLineDash([10, 6]);
+      pctx.strokeRect(p.x * preview.width + 2, p.y * preview.height + 2, p.w * preview.width - 4, p.h * preview.height - 4);
+      pctx.restore();
+    }
   }
 
-  studio.commit = commit;
-
-  studio.loadPhoto = (src, name) =>
-    new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        studio.photos.push({ name, img, src });
-        if (studio.photos.length === 1) studio.selectedPhoto = 0;
-        resolve(studio.photos[studio.photos.length - 1]);
-      };
-      img.onerror = () => reject(new Error(`could not load photo ${name}`));
-      img.src = src;
+  function syncPanelControls() {
+    const slot = state.panels[state.selected];
+    const sel = $('#panel-photo');
+    sel.innerHTML = '';
+    photoNames.forEach((name, i) => {
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = `${i + 1} · ${name}`;
+      sel.appendChild(opt);
     });
+    sel.value = String(slot.photo);
+    $('#panel-zoom').value = String(slot.zoom);
+    $('#panel-label').textContent = `Panel ${state.selected + 1} of ${panelCount()}`;
+  }
 
-  studio.loadSamples = async () => {
-    for (const sample of SAMPLE_PHOTOS) {
-      if (!studio.photos.some((p) => p.name === sample.name)) {
-        await studio.loadPhoto(sample.src, sample.name);
+  function buildPickers() {
+    const layoutBox = $('#layout-picker');
+    LAYOUTS.forEach((l) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pick';
+      b.dataset.layout = l.id;
+      b.textContent = l.name;
+      b.addEventListener('click', () => {
+        state.layout = l.id;
+        state.selected = 0;
+        state.panels = defaultPanels(9, Math.max(1, photos.length));
+        document.querySelectorAll('#layout-picker .pick').forEach((el) => el.classList.toggle('active', el.dataset.layout === l.id));
+        syncPanelControls();
+        paint();
+      });
+      layoutBox.appendChild(b);
+    });
+    layoutBox.querySelector('[data-layout="hero-split"]').classList.add('active');
+
+    const gradeBox = $('#grade-picker');
+    GRADES.forEach((g) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch';
+      b.dataset.grade = g.id;
+      b.title = g.name;
+      b.style.background = `linear-gradient(135deg, ${g.top} 0%, ${g.mid} 55%, ${g.deep} 100%)`;
+      const label = document.createElement('span');
+      label.textContent = g.name;
+      b.appendChild(label);
+      b.addEventListener('click', () => {
+        state.grade = g.id;
+        document.querySelectorAll('#grade-picker .swatch').forEach((el) => el.classList.toggle('active', el.dataset.grade === g.id));
+        paint();
+      });
+      gradeBox.appendChild(b);
+    });
+    gradeBox.querySelector('[data-grade="vice-sunset"]').classList.add('active');
+
+    const sizeBox = $('#size-picker');
+    SIZES.forEach((s) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'pick';
+      b.dataset.size = s.id;
+      b.textContent = s.name;
+      b.addEventListener('click', () => {
+        state.size = s.id;
+        document.querySelectorAll('#size-picker .pick').forEach((el) => el.classList.toggle('active', el.dataset.size === s.id));
+        paint();
+      });
+      sizeBox.appendChild(b);
+    });
+    sizeBox.querySelector('[data-size="wide"]').classList.add('active');
+  }
+
+  function bindInputs() {
+    $('#title-input').addEventListener('input', (e) => { state.title = e.target.value; paint(); });
+    $('#subtitle-input').addEventListener('input', (e) => { state.subtitle = e.target.value; paint(); });
+    $('#panel-photo').addEventListener('change', (e) => {
+      state.panels[state.selected].photo = Number(e.target.value);
+      paint();
+    });
+    $('#panel-zoom').addEventListener('input', (e) => {
+      state.panels[state.selected].zoom = Number(e.target.value);
+      paint();
+    });
+    $('#panel-centre').addEventListener('click', () => {
+      const slot = state.panels[state.selected];
+      slot.dx = 0; slot.dy = 0; slot.zoom = 1;
+      syncPanelControls();
+      paint();
+    });
+    $('#photo-file').addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      try {
+        const img = await loadImage(url);
+        if (photos.length >= 6) { photos.shift(); photoNames.shift(); }
+        photos.push(img);
+        photoNames.push(file.name);
+        state.panels[state.selected].photo = photos.length - 1;
+        syncPanelControls();
+        paint();
+      } finally {
+        URL.revokeObjectURL(url);
       }
-    }
-    ensurePanels(studio.state, studio.photos.length);
-    // The first sample fills every panel, so the cover is alive at once.
-    studio.fillAll(0, false);
-    commit();
-  };
-
-  studio.addUpload = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const photo = await studio.loadPhoto(String(reader.result), file.name);
-          studio.selectedPhoto = studio.photos.length - 1;
-          commit();
-          resolve(photo);
-        } catch (err) {
-          reject(err);
-        }
-      };
-      reader.onerror = () => reject(new Error('could not read that file'));
-      reader.readAsDataURL(file);
+      e.target.value = '';
     });
+    $('#export-btn').addEventListener('click', () => exportCover());
+    $('#shuffle-btn').addEventListener('click', () => {
+      state.panels = defaultPanels(9, Math.max(1, photos.length)).map((s, i) => ({
+        ...s,
+        photo: (s.photo + i) % Math.max(1, photos.length),
+      }));
+      syncPanelControls();
+      paint();
+    });
+  }
 
-  studio.selectPhoto = (index) => {
-    if (index >= 0 && index < studio.photos.length) {
-      studio.selectedPhoto = index;
-      studio.onChange();
+  // Pick a panel by clicking the preview; drag pans it, wheel zooms it.
+  function bindPreview() {
+    let dragging = false;
+    let lastX = 0, lastY = 0;
+
+    function pickPanel(clientX, clientY) {
+      const r = preview.getBoundingClientRect();
+      const fx = (clientX - r.left) / r.width;
+      const fy = (clientY - r.top) / r.height;
+      const panels = layoutById(state.layout).panels();
+      let best = -1;
+      panels.forEach((p, i) => {
+        if (fx >= p.x && fx <= p.x + p.w && fy >= p.y && fy <= p.y + p.h) best = i;
+      });
+      return best;
     }
-  };
 
-  // Click a panel: put the selected tray photo in it.
-  studio.placeInPanel = (panelId) => {
-    if (studio.photos.length === 0) return false;
-    const place = studio.state.panels[panelId];
-    if (!place) return false;
-    place.photo = studio.selectedPhoto;
-    place.ox = 0;
-    place.oy = 0;
-    place.zoom = 1;
-    commit();
-    return true;
-  };
+    preview.addEventListener('pointerdown', (e) => {
+      const i = pickPanel(e.clientX, e.clientY);
+      if (i < 0) return;
+      state.selected = i;
+      dragging = true;
+      lastX = e.clientX; lastY = e.clientY;
+      preview.setPointerCapture(e.pointerId);
+      syncPanelControls();
+      paint();
+    });
+    preview.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const r = preview.getBoundingClientRect();
+      const slot = state.panels[state.selected];
+      slot.dx += ((e.clientX - lastX) / r.width) * 1.2;
+      slot.dy += ((e.clientY - lastY) / r.height) * 1.2;
+      slot.dx = Math.max(-1, Math.min(1, slot.dx));
+      slot.dy = Math.max(-1, Math.min(1, slot.dy));
+      lastX = e.clientX; lastY = e.clientY;
+      paint();
+    });
+    preview.addEventListener('pointerup', () => { dragging = false; });
+    preview.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const slot = state.panels[state.selected];
+      slot.zoom = Math.max(0.5, Math.min(3, slot.zoom * (e.deltaY < 0 ? 1.1 : 0.9)));
+      syncPanelControls();
+      paint();
+    }, { passive: false });
+  }
 
-  // One click fills every panel with one photo.
-  studio.fillAll = (photoIndex, record = true) => {
-    if (photoIndex < 0 || photoIndex >= studio.photos.length) return false;
-    for (const place of Object.values(studio.state.panels)) {
-      place.photo = photoIndex;
-      place.ox = 0;
-      place.oy = 0;
-      place.zoom = 1;
-    }
-    if (record) commit();
-    return true;
-  };
+  function exportCover() {
+    const size = sizeById(state.size);
+    const off = document.createElement('canvas');
+    off.width = size.w;
+    off.height = size.h;
+    drawCover(off.getContext('2d'), size.w, size.h, state, photos);
+    return new Promise((resolve) => {
+      off.toBlob((blob) => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `golden-hour-cover-${state.size}.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        resolve(blob);
+      }, 'image/png');
+    });
+  }
 
-  studio.setLayout = (layout) => {
-    if (!LAYOUTS[layout] || studio.state.layout === layout) return;
-    studio.state.layout = layout;
-    ensurePanels(studio.state, studio.photos.length);
-    commit();
-  };
+  // Render a cover offscreen at full size (used by the shot driver and the
+  // tests); resolves with the canvas.
+  function renderOffscreen(overrides = {}) {
+    const merged = { ...state, ...overrides };
+    const size = sizeById(merged.size);
+    const off = document.createElement('canvas');
+    off.width = size.w;
+    off.height = size.h;
+    drawCover(off.getContext('2d'), size.w, size.h, merged, photos);
+    return off;
+  }
 
-  studio.setGrade = (grade) => {
-    if (studio.state.grade === grade) return;
-    studio.state.grade = grade;
-    commit();
-  };
+  async function init() {
+    buildPickers();
+    bindInputs();
+    bindPreview();
+    $('#title-input').value = state.title;
+    $('#subtitle-input').value = state.subtitle;
+    ready = (async () => {
+      for (const s of SAMPLES) {
+        try {
+          const img = await loadImage(s.src);
+          photos.push(img);
+          photoNames.push(s.name);
+        } catch { /* a missing sample just leaves its slot painted */ }
+      }
+      await document.fonts.ready;
+      syncPanelControls();
+      paint();
+    })();
+    await ready;
+  }
 
-  studio.setTitleStyle = (style) => {
-    if (studio.state.titleStyle === style) return;
-    studio.state.titleStyle = style;
-    commit();
+  return {
+    state, photos, photoNames, init,
+    paint, syncPanelControls, exportCover, renderOffscreen,
+    get ready() { return ready; },
+    get renders() { return rendered; },
   };
-
-  studio.setSize = (size) => {
-    if (studio.state.size === size) return;
-    studio.state.size = size;
-    commit();
-  };
-
-  studio.setCaption = (field, value) => {
-    if (studio.state[field] === value) return;
-    studio.state[field] = value;
-    commit();
-  };
-
-  studio.toggleSticker = (name) => {
-    studio.state.stickers[name] = !studio.state.stickers[name];
-    commit();
-  };
-
-  // Drag inside a panel: move the photo. Called live during the drag; the
-  // history push happens once, when the drag starts (snapshotBefore) and
-  // ends (snapshotAfter is the live state), so one drag is one undo step.
-  studio.beginDrag = () => {
-    studio.history = studio.history.slice(0, studio.historyIndex + 1);
-    studio.history.push(JSON.stringify(studio.state));
-    if (studio.history.length > 80) studio.history.shift();
-    studio.historyIndex = studio.history.length - 1;
-  };
-  studio.movePanel = (panelId, dx, dy) => {
-    const place = studio.state.panels[panelId];
-    if (!place) return;
-    place.ox = Math.max(-0.6, Math.min(0.6, place.ox + dx));
-    place.oy = Math.max(-0.6, Math.min(0.6, place.oy + dy));
-    // No onChange here: the pointer handler repaints the preview itself,
-    // so a drag does not rebuild the whole control panel on every move.
-  };
-  studio.zoomPanel = (panelId, factor) => {
-    const place = studio.state.panels[panelId];
-    if (!place) return;
-    place.zoom = Math.max(1, Math.min(3.5, place.zoom * factor));
-    studio.onChange();
-  };
-  studio.endDrag = () => {
-    // Replace the pre-drag snapshot with the post-drag state: one step.
-    studio.history[studio.historyIndex] = JSON.stringify(studio.state);
-    studio.onChange();
-  };
-
-  studio.canUndo = () => studio.historyIndex > 0;
-  studio.canRedo = () => studio.historyIndex < studio.history.length - 1;
-
-  studio.undo = () => {
-    if (!studio.canUndo()) return false;
-    studio.historyIndex--;
-    restore(studio.history[studio.historyIndex]);
-    return true;
-  };
-
-  studio.redo = () => {
-    if (!studio.canRedo()) return false;
-    studio.historyIndex++;
-    restore(studio.history[studio.historyIndex]);
-    return true;
-  };
-
-  studio.resetHistory = () => {
-    studio.history = [JSON.stringify(studio.state)];
-    studio.historyIndex = 0;
-  };
-
-  studio.resetHistory();
-  return studio;
 }

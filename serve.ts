@@ -1,19 +1,21 @@
-// Golden Hour Cover Studio — a tiny static server for app/ (Node 22, standard
-// library only), so the entry can be tried locally without a build step:
-//   node serve.ts            serves app/ on http://localhost:8080
+// A tiny static server for app/ (Node 22, standard library only), so the
+// entry can be tried locally with no build step:
+//
+//   node serve.ts            # serves app/ on http://localhost:8080
 //   node serve.ts --port 9000
-// It sends the MIME types an offline web app needs, refuses any path that
-// climbs out of app/, and otherwise does nothing clever: this is a
-// development convenience, not a web server for the internet.
+//
+// It sends the MIME types an offline web app needs and refuses any path
+// outside app/. A development convenience, not a server for the internet.
+
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const root = resolve(fileURLToPath(new URL('./app', import.meta.url)));
-const args = process.argv.slice(2);
-const portFlag = args.indexOf('--port');
-const wanted = portFlag === -1 ? 8080 : Number(args[portFlag + 1]);
+const appRoot = resolve(fileURLToPath(new URL('./app', import.meta.url)));
+const argv = process.argv.slice(2);
+const portFlag = argv.indexOf('--port');
+const wanted = portFlag === -1 ? 8080 : Number(argv[portFlag + 1]);
 const port = Number.isInteger(wanted) && wanted > 0 && wanted < 65536 ? wanted : 8080;
 
 const MIME = {
@@ -33,6 +35,7 @@ const MIME = {
   '.woff': 'font/woff',
   '.ttf': 'font/ttf',
   '.otf': 'font/otf',
+  '.wasm': 'application/wasm',
   '.txt': 'text/plain; charset=utf-8',
 };
 
@@ -46,8 +49,8 @@ createServer((request, response) => {
     return;
   }
   if (pathname.endsWith('/')) pathname += 'index.html';
-  const file = resolve(join(root, normalize(pathname)));
-  if (file !== root && !file.startsWith(root + sep)) {
+  const file = resolve(join(appRoot, normalize(pathname)));
+  if (file !== appRoot && !file.startsWith(appRoot + sep)) {
     response.writeHead(403).end('forbidden');
     return;
   }
@@ -67,5 +70,5 @@ createServer((request, response) => {
   });
   createReadStream(file).pipe(response);
 }).listen(port, '127.0.0.1', () => {
-  console.log(`Golden Hour Cover Studio is on http://localhost:${port}`);
+  console.log(`app/ is on http://localhost:${port}`);
 });

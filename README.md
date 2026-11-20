@@ -4,68 +4,52 @@
 [![rank](https://make.fun/badge/gta6-cover-art-01/hurulsufi12-art/gta6-cover-art/rank.svg)](https://make.fun/bounty/gta6-cover-art-01)
 [![reward](https://make.fun/badge/gta6-cover-art-01/hurulsufi12-art/gta6-cover-art/reward.svg)](https://make.fun/bounty/gta6-cover-art-01)
 
-A free, fully offline cover-art maker for GTA 6 launch week. Turn your own
-photo and a caption into a warm golden-hour, multi-panel poster and export it
-as a PNG to share. Your photos never leave your machine — there is no upload,
-no account, no network request at all.
+An offline web app that turns any photo and caption into GTA 6-style
+multi-panel cover art, and exports it as a PNG to share.
 
-## How it works
+## What it does
 
-1. **Add photos** — pick one of the two built-in sample photos, or load your
-   own from your machine (JPG, PNG or WebP). Click a photo in the tray, then
-   click a panel to place it there. **Fill all** drops one photo into every
-   panel in a single click.
-2. **Pick a layout** — six poster layouts: Magazine, Nine Grid, Diagonal,
-   Film Strip, Duo and Full Bleed.
-3. **Pick a grade** — six golden-hour duotone grades: Gold, Teal Noir, Peach,
-   Mint, Mono and Coral. Every grade finishes with film grain and a vignette.
-4. **Write the caption** — an editable title, sub-caption and place tag, in
-   big Anton lettering (Solid, Outline or Stamp) with Bebas Neue kickers.
-   Toggle the sticker badges: a five-star row, a round `EST. 2026` badge and
-   a location-pin tag.
-5. **Crop each panel** — drag inside a panel to move the photo, scroll over a
-   panel to zoom it.
-6. **Export** — one click saves a PNG in 1080x1080 (square), 1080x1350
-   (portrait) or 1920x1080 (wide).
+- **6 layouts** — Hero Split, Four Grid, Full Bleed, Strip Stack,
+  Tilted Snapshots and Nine Grid — each a different multi-panel poster
+  arrangement with white gutters and a framed title block.
+- **6 colour grades** — Vice Sunset, Neon Nights, Golden Hour, Palm Teal,
+  Heat Haze and Mono Noir — gradient-map sunset / neon treatments with
+  vignette and film grain, drawn on canvas.
+- **Any photo** — load your own photos from your machine (or use the two
+  bundled samples), put one photo across several panels or a different
+  photo in each panel, drag to position and scroll to zoom every panel.
+- **Caption** — a big Anton title and a Bebas Neue subtitle, edited live.
+- **Export** — one click writes a PNG in 1080 x 1080, 1080 x 1350 or
+  1920 x 1080.
 
-Every edit can be stepped back and forward with **Undo / Redo** (buttons or
-Ctrl+Z / Ctrl+Y), and the live preview canvas updates on every change.
+Everything runs offline from static files under `app/`: no network
+request, no upload, no build step. Photos never leave the machine.
 
-## Run it
+## Try it
 
 ```sh
 node serve.ts
+# open http://localhost:8080
 ```
 
-Then open http://localhost:8080 in desktop Chrome. Everything is static
-files under `app/` — no build step, no dependencies, no network.
+## Files
 
-## Hand it in
-
-```sh
-mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
-```
-
-`main.ts` (Node 22, standard library only) copies `app/` and `screenshots/`
-to the output directory and writes `dossier.json` with the vendored
-`vendor/makefun-app.ts` library. Running it twice writes byte-identical
-output.
-
-## Screenshots
-
-`shots.json` drives the app's own `?shot=` scenes: `1-cover.jpg` is an
-exported wide cover, `2-editor.jpg` is the editor with a photo loaded,
-`3-cover.jpg` is an exported portrait cover and `4-cover.jpg` is an exported
-square cover. All four are real renders of the app, nothing edited or
-composited.
-
-## Original art
-
-All lettering uses Anton and Bebas Neue, shipped under the SIL Open Font
-License (see `app/fonts/OFL.txt`). The sample photos are the kit's own
-free-to-use images. Nothing here is Rockstar Games artwork, a Rockstar logo
-or wordmark, or a game font.
+- `app/index.html`, `app/style.css` — the studio page and its styling.
+- `app/src/boot.js` — entry point: starts the studio, or a headless
+  `?shot=` scene for screenshots.
+- `app/src/render.js` — the cover engine: layouts, grades, title block,
+  grain and vignette, drawn on a 2D canvas.
+- `app/src/studio.js` — the editor: photo pool, panel picking, drag to
+  pan, wheel to zoom, live preview, PNG export.
+- `app/src/shots.js` — headless scene driver used to take the screenshots
+  in `screenshots/`.
+- `app/fonts/` — Anton and Bebas Neue under the SIL Open Font License
+  (`OFL.txt` beside them).
+- `app/samples/` — two sample photos made with an image model, free to use.
+- `main.ts` — the entry program: copies `app/` and `screenshots/` to
+  `/output` and writes `/output/dossier.json`.
+- `shots.json` — the four screenshot scenes.
 
 ## License
 
-MIT — see `LICENSE`.
+MIT — see `LICENSE`. Fonts are under the SIL Open Font License.
