@@ -1,76 +1,33 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Neon Palm Cover Studio — turn any photo and a caption into GTA-poster-style multi-panel cover art, exported as a PNG. Runs fully offline.">
-<title>Neon Palm Cover Studio — GTA-style cover art maker</title>
-<link rel="stylesheet" href="./style.css">
+<title>Golden Hour Cover Studio — turn your photo into GTA-style cover art</title>
+<meta name="description" content="Golden Hour Cover Studio: a free offline cover-art maker. Drop in a photo, pick a layout and a golden-hour grade, letter the caption, export a PNG to share.">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="topbar">
-  <h1>Neon Palm Cover Studio</h1>
-  <p>Your photo, a caption, and a Neon Bay sunset — made into cover art to share.</p>
-</header>
-<main class="app">
-  <section class="controls" aria-label="Cover controls">
-    <div class="group">
-      <h2>1 · Photos</h2>
-      <label class="file-btn">Add your photos
-        <input id="photoFile" type="file" accept="image/*" multiple>
-      </label>
-      <div id="library" class="library" aria-label="Photo library"></div>
-      <p class="hint">Click a photo to put it in the selected panel. Click a panel in the
-        preview to select it, drag to move the photo, scroll to zoom.</p>
-      <button id="fillAll" type="button">Fill every panel with this photo</button>
+<div id="app">
+  <header class="masthead">
+    <div>
+      <h1 class="wordmark">Golden Hour <span>Cover Studio</span></h1>
+      <p class="tagline">Your photo, a caption, and the last light of the day — made into cover art to share.</p>
     </div>
-    <div class="group">
-      <h2>2 · Layout</h2>
-      <div id="layouts" class="picker"></div>
-    </div>
-    <div class="group">
-      <h2>3 · Colour grade</h2>
-      <div id="grades" class="picker grades"></div>
-    </div>
-    <div class="group">
-      <h2>4 · Caption</h2>
-      <label>Caption
-        <input id="caption" type="text" maxlength="40" value="Neon Shore">
-      </label>
-      <label>Sub-caption
-        <input id="subcaption" type="text" maxlength="48" value="a night in Neon Bay">
-      </label>
-      <label>Lettering
-        <select id="lettering">
-          <option value="anton" selected>Bold poster (Anton)</option>
-          <option value="script">Script title (Pacifico)</option>
-          <option value="outline">Outline poster (Anton)</option>
-        </select>
-      </label>
-    </div>
-    <div class="group">
-      <h2>5 · Selected panel</h2>
-      <p id="selectedPanel" role="status">Panel 1 of 4</p>
-      <label>Zoom
-        <input id="zoom" type="range" min="100" max="400" value="100">
-      </label>
-    </div>
-    <div class="group">
-      <h2>6 · Export</h2>
-      <div id="sizes" class="picker sizes"></div>
-      <div class="row">
-        <button id="undo" type="button">Undo</button>
-        <button id="redo" type="button">Redo</button>
-      </div>
-      <button id="reset" type="button">Reset cover</button>
-      <button id="export" type="button" class="primary">Export PNG</button>
-      <p id="status" role="status"></p>
-    </div>
-  </section>
-  <section class="preview" aria-label="Live preview">
-    <canvas id="cover" width="1920" height="1080" aria-label="The cover, live preview"></canvas>
-  </section>
-</main>
-<script type="module" src="./src/main.js"></script>
+    <p class="howto">1 · Add photos &nbsp;→&nbsp; 2 · Pick a layout &amp; grade &nbsp;→&nbsp; 3 · Letter the caption &nbsp;→&nbsp; 4 · Download the PNG</p>
+  </header>
+  <main class="workspace">
+    <aside id="controls" aria-label="Cover controls"></aside>
+    <section class="preview-wrap" aria-label="Live preview">
+      <canvas id="preview" width="1920" height="1080"></canvas>
+      <p class="preview-note">Live preview — click a panel to select it, drag to move the photo, scroll to zoom.</p>
+    </section>
+  </main>
+  <footer class="foot">
+    <p>Golden Hour Cover Studio — original cover art made on your machine. Photos never leave your browser. Fonts: Anton &amp; Bebas Neue (SIL Open Font License). No Rockstar Games artwork, logo or font is used.</p>
+  </footer>
+</div>
+<canvas id="cover" aria-label="Exported cover"></canvas>
+<script type="module" src="src/boot.js"></script>
 </body>
 </html>
