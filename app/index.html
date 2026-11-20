@@ -1,33 +1,24 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Golden Hour Cover Studio — turn your photo into GTA-style cover art</title>
-<meta name="description" content="Golden Hour Cover Studio: a free offline cover-art maker. Drop in a photo, pick a layout and a golden-hour grade, letter the caption, export a PNG to share.">
-<link rel="stylesheet" href="style.css">
+<title>Golden Hour Cover Studio — make your GTA 6-style cover</title>
+<link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<div id="app">
-  <header class="masthead">
-    <div>
-      <h1 class="wordmark">Golden Hour <span>Cover Studio</span></h1>
-      <p class="tagline">Your photo, a caption, and the last light of the day — made into cover art to share.</p>
-    </div>
-    <p class="howto">1 · Add photos &nbsp;→&nbsp; 2 · Pick a layout &amp; grade &nbsp;→&nbsp; 3 · Letter the caption &nbsp;→&nbsp; 4 · Download the PNG</p>
-  </header>
-  <main class="workspace">
-    <aside id="controls" aria-label="Cover controls"></aside>
-    <section class="preview-wrap" aria-label="Live preview">
-      <canvas id="preview" width="1920" height="1080"></canvas>
-      <p class="preview-note">Live preview — click a panel to select it, drag to move the photo, scroll to zoom.</p>
-    </section>
-  </main>
-  <footer class="foot">
-    <p>Golden Hour Cover Studio — original cover art made on your machine. Photos never leave your browser. Fonts: Anton &amp; Bebas Neue (SIL Open Font License). No Rockstar Games artwork, logo or font is used.</p>
-  </footer>
-</div>
-<canvas id="cover" aria-label="Exported cover"></canvas>
-<script type="module" src="src/boot.js"></script>
+<header class="masthead">
+  <div class="brand">GOLDEN HOUR <span>COVER STUDIO</span></div>
+  <p class="tagline">Turn your own photo and a caption into a warm golden-hour, multi-panel poster — free, offline, nothing uploaded.</p>
+</header>
+<main class="app">
+  <aside id="controls" class="controls" aria-label="Cover controls"></aside>
+  <section class="stage">
+    <canvas id="preview" width="1920" height="1080" aria-label="Live cover preview"></canvas>
+    <p id="status" role="status">Pick a photo, then click a panel to place it.</p>
+    <p class="fineprint">Original art only — no Rockstar Games logo, wordmark, artwork or font. Photos stay on your machine. Anton &amp; Bebas Neue are licensed under the SIL Open Font License (see app/fonts/OFL.txt).</p>
+  </section>
+</main>
+<script type="module" src="./src/boot.js"></script>
 </body>
 </html>
