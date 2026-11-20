@@ -1,21 +1,20 @@
-// A tiny static server for app/ (Node 22, standard library only), so the
-// cover studio can be tried locally with no build step:
-//   node serve.ts            -> http://localhost:8080
+// Golden Hour Cover Studio — a tiny static server for app/ (Node 22, standard
+// library only), so the entry can be tried locally without a build step:
+//   node serve.ts            serves app/ on http://localhost:8080
 //   node serve.ts --port 9000
-// Serves app/ and screenshots/ (the shot scenes live under app/, the images
-// they capture are written beside it). Refuses any path outside those roots.
-
+// It sends the MIME types an offline web app needs, refuses any path that
+// climbs out of app/, and otherwise does nothing clever: this is a
+// development convenience, not a web server for the internet.
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const here = fileURLToPath(new URL('.', import.meta.url));
-const roots = [resolve(here, 'app'), resolve(here, 'screenshots')];
+const root = resolve(fileURLToPath(new URL('./app', import.meta.url)));
 const args = process.argv.slice(2);
-const portIndex = args.indexOf('--port');
-const requested = portIndex === -1 ? 8080 : Number(args[portIndex + 1]);
-const port = Number.isInteger(requested) && requested > 0 && requested < 65536 ? requested : 8080;
+const portFlag = args.indexOf('--port');
+const wanted = portFlag === -1 ? 8080 : Number(args[portFlag + 1]);
+const port = Number.isInteger(wanted) && wanted > 0 && wanted < 65536 ? wanted : 8080;
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -26,10 +25,14 @@ const MIME = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
+  '.woff': 'font/woff',
   '.ttf': 'font/ttf',
   '.otf': 'font/otf',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
 };
 
@@ -43,13 +46,8 @@ createServer((request, response) => {
     return;
   }
   if (pathname.endsWith('/')) pathname += 'index.html';
-  const clean = normalize(pathname).replace(/^[/\\]+/, '');
-  let file = null;
-  for (const root of roots) {
-    const candidate = resolve(join(root, clean));
-    if (candidate === root || candidate.startsWith(root + sep)) { file = candidate; break; }
-  }
-  if (!file) {
+  const file = resolve(join(root, normalize(pathname)));
+  if (file !== root && !file.startsWith(root + sep)) {
     response.writeHead(403).end('forbidden');
     return;
   }

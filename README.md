@@ -1,57 +1,46 @@
 # Golden Hour Cover Studio
 
-[![make.fun](https://make.fun/badge.svg)](https://make.fun/bounty/gta6-cover-art-01)
-[![cover-art](https://make.fun/badge-cover-art.svg)](https://make.fun/bounty/gta6-cover-art-01)
-[![repo](https://img.shields.io/badge/repo-hurulsufi12--art%2Fgta6--cover--art-blue)](https://github.com/hurulsufi12-art/gta6-cover-art)
+[![gta6-cover-art-01](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01)
+[![rank](https://make.fun/badge/gta6-cover-art-01/hurulsufi12-art/gta6-cover-art/rank.svg)](https://make.fun/bounty/gta6-cover-art-01)
+[![reward](https://make.fun/badge/gta6-cover-art-01/hurulsufi12-art/gta6-cover-art/reward.svg)](https://make.fun/bounty/gta6-cover-art-01)
 
-A free, offline cover-art maker for GTA 6 launch week: turn your own photo
-and a caption into a warm golden-hour, multi-panel poster and export it as a
-PNG to share. Photos never leave your machine — the app runs entirely from
-static files, with no network request.
+A free, fully offline cover-art maker for GTA 6 launch week. Turn your own
+photo and a caption into a warm golden-hour, multi-panel poster and export it
+as a PNG to share. Your photos never leave your machine — there is no upload,
+no account, no network request at all.
 
-## What it does
+## How it works
 
-- **6 layouts** — Magazine (full-bleed hero + 3-panel film strip, the
-  default), Nine Grid (3×3 with a title block in the centre cell), Diagonal
-  (a slanted title band cutting across the cover), Film Strip (a tall strip
-  beside one big panel), Duo (two tall side-by-side panels) and Full Bleed
-  (one photo filling the whole cover with the title on top).
-- **6 golden-hour grades** — Gold, Teal Noir, Peach, Mint, Mono and Coral.
-  Each is a duotone gradient map over the photo, finished with film grain
-  and a vignette.
-- **Lettering** — big Anton titles in three styles (Solid, Outline, Stamp;
-  the title may overlap the seam between hero and strip) and Bebas Neue
-  kickers and labels. No script font.
-- **Any photo** — add your own photos, click a photo to place it in the
-  selected panel, fill every panel with one photo in a single click, drag
-  inside a panel to move the photo, scroll over a panel to zoom it.
-- **Caption editing** — editable title, sub-caption and place tag, plus
-  toggleable sticker badges: a 5-star row, a round "EST. 2026" badge and a
-  location-pin tag.
-- **Fast export** — one click exports the cover as a PNG in 1080×1080
-  (square), 1080×1350 (portrait) or 1920×1080 (wide).
-- **Undo / redo** — every edit steps back and forward (buttons, Ctrl+Z /
-  Ctrl+Y), with a live preview canvas that updates on every change.
+1. **Add photos** — pick one of the two built-in sample photos, or load your
+   own from your machine (JPG, PNG or WebP). Click a photo in the tray, then
+   click a panel to place it there. **Fill all** drops one photo into every
+   panel in a single click.
+2. **Pick a layout** — six poster layouts: Magazine, Nine Grid, Diagonal,
+   Film Strip, Duo and Full Bleed.
+3. **Pick a grade** — six golden-hour duotone grades: Gold, Teal Noir, Peach,
+   Mint, Mono and Coral. Every grade finishes with film grain and a vignette.
+4. **Write the caption** — an editable title, sub-caption and place tag, in
+   big Anton lettering (Solid, Outline or Stamp) with Bebas Neue kickers.
+   Toggle the sticker badges: a five-star row, a round `EST. 2026` badge and
+   a location-pin tag.
+5. **Crop each panel** — drag inside a panel to move the photo, scroll over a
+   panel to zoom it.
+6. **Export** — one click saves a PNG in 1080x1080 (square), 1080x1350
+   (portrait) or 1920x1080 (wide).
 
-## Try it
+Every edit can be stepped back and forward with **Undo / Redo** (buttons or
+Ctrl+Z / Ctrl+Y), and the live preview canvas updates on every change.
+
+## Run it
 
 ```sh
 node serve.ts
-# open http://localhost:8080
 ```
 
-Pick a sample photo (Boulevard or Pier), click a panel to place it, choose a
-layout and a grade, type your caption, and export. Or add your own photo
-with the file picker — it is read on your machine and never uploaded.
+Then open http://localhost:8080 in desktop Chrome. Everything is static
+files under `app/` — no build step, no dependencies, no network.
 
-## Original art only
-
-No Rockstar Games logo, wordmark, artwork or font is used anywhere. The
-lettering fonts (Anton and Bebas Neue) are shipped under the SIL Open Font
-License; see `app/fonts/OFL.txt`. The two sample photos in `app/samples/`
-come from the competition kit and are free to use.
-
-## Handing it in
+## Hand it in
 
 ```sh
 mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
@@ -59,11 +48,24 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
 `main.ts` (Node 22, standard library only) copies `app/` and `screenshots/`
 to the output directory and writes `dossier.json` with the vendored
-`vendor/makefun-app.ts` library. Run it twice and the output is
-byte-identical.
+`vendor/makefun-app.ts` library. Running it twice writes byte-identical
+output.
 
 ## Screenshots
 
-The four screenshots in `screenshots/` are renders of this app's own
-`?shot=` scenes — the cover renderer and the editor, driven by URL
-parameters (`shots.json` lists them). Nothing was edited or composited.
+`shots.json` drives the app's own `?shot=` scenes: `1-cover.jpg` is an
+exported wide cover, `2-editor.jpg` is the editor with a photo loaded,
+`3-cover.jpg` is an exported portrait cover and `4-cover.jpg` is an exported
+square cover. All four are real renders of the app, nothing edited or
+composited.
+
+## Original art
+
+All lettering uses Anton and Bebas Neue, shipped under the SIL Open Font
+License (see `app/fonts/OFL.txt`). The sample photos are the kit's own
+free-to-use images. Nothing here is Rockstar Games artwork, a Rockstar logo
+or wordmark, or a game font.
+
+## License
+
+MIT — see `LICENSE`.

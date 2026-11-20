@@ -1,45 +1,223 @@
-@font-face { font-family: "Anton"; src: url("./fonts/Anton-Regular.ttf") format("truetype"); font-display: swap; }
-@font-face { font-family: "Bebas Neue"; src: url("./fonts/BebasNeue-Regular.ttf") format("truetype"); font-display: swap; }
+/* Golden Hour Cover Studio — style.css
+   Warm dusk editor chrome: deep plum panels, amber accents, Anton display
+   type for headings and Bebas Neue for labels. Fonts are files under
+   app/fonts/, loaded with @font-face, so the page works fully offline. */
 
-html, body { margin: 0; padding: 0; background: #f7ead2; color: #241a12; font: 15px/1.45 system-ui, sans-serif; }
-.masthead { padding: 18px 28px 8px; border-bottom: 3px solid #241a12; display: flex; gap: 24px; align-items: baseline; flex-wrap: wrap; }
-.brand { font-family: "Anton", sans-serif; font-size: 34px; letter-spacing: 1px; }
-.brand span { color: #e4572e; }
-.tagline { margin: 0; color: #6b543a; max-width: 640px; }
-.app { display: flex; gap: 24px; padding: 20px 28px 28px; align-items: flex-start; }
-.controls { width: 300px; flex: none; display: flex; flex-direction: column; gap: 4px; }
-.controls h2 { font-family: "Bebas Neue", sans-serif; font-size: 20px; letter-spacing: 2px; margin: 14px 0 6px; border-bottom: 2px solid #e4572e; padding-bottom: 2px; }
-.group { display: flex; flex-wrap: wrap; gap: 8px; }
-.tray { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
-.chip { font: inherit; font-weight: 700; padding: 7px 11px; border: 2px solid #241a12; border-radius: 20px; background: #fff8e8; color: #241a12; cursor: pointer; text-transform: capitalize; }
-.chip.active { background: #241a12; color: #f7ead2; }
-.thumb-btn { font: inherit; font-weight: 700; padding: 8px 12px; border: 2px solid #241a12; border-radius: 8px; background: #fff8e8; cursor: pointer; }
-.thumb-btn.active { background: #f2a541; }
-.wide-btn, .export-btn { font: inherit; font-weight: 800; padding: 10px 12px; border: 0; border-radius: 8px; background: #241a12; color: #fff8e8; cursor: pointer; width: 100%; margin-top: 8px; }
-.export-btn { background: #e4572e; font-size: 17px; }
-.hint { font-size: 13px; color: #6b543a; margin: 6px 0 0; }
-.file-label { display: flex; flex-direction: column; gap: 6px; font-weight: 700; width: 100%; margin-top: 8px; }
-label { display: flex; flex-direction: column; gap: 5px; font-weight: 700; width: 100%; }
-label.check { flex-direction: row; align-items: center; font-weight: 600; }
-input[type=text], select { font: inherit; padding: 8px; border: 2px solid #241a12; border-radius: 6px; background: #fff8e8; width: 100%; box-sizing: border-box; }
-input[type=file] { font: inherit; }
-.stage { flex: 1; min-width: 0; }
-#preview { width: 100%; height: auto; display: block; background: #e8d5ae; box-shadow: 0 10px 34px rgba(36, 26, 18, 0.35); cursor: crosshair; }
-#status { font-weight: 700; margin: 12px 0 4px; }
-.fineprint { font-size: 12px; color: #6b543a; margin: 0; max-width: 720px; }
+@font-face {
+  font-family: 'Anton';
+  src: url('fonts/Anton-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
-/* Grade swatch chips carry a hint of their look. */
-.grade-gold { background: linear-gradient(135deg, #ffb347, #e4572e); color: #fff; }
-.grade-teal { background: linear-gradient(135deg, #0f766e, #f2a541); color: #fff; }
-.grade-peach { background: linear-gradient(135deg, #ffc4a3, #e4572e); color: #5b1a10; }
-.grade-mint { background: linear-gradient(135deg, #a7f3d0, #166534); color: #123524; }
-.grade-mono { background: linear-gradient(135deg, #e5e0d8, #241a12); color: #fff; }
-.grade-coral { background: linear-gradient(135deg, #ff8a80, #c2185b); color: #fff; }
+@font-face {
+  font-family: 'Bebas Neue';
+  src: url('fonts/BebasNeue-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
-/* Screenshot scenes: cover alone fills the viewport; editor keeps chrome. */
-body.shot-cover .masthead, body.shot-cover .controls, body.shot-cover #status, body.shot-cover .fineprint { display: none; }
-body.shot-cover .app { padding: 0; gap: 0; }
-body.shot-cover .stage { flex: 1; }
-body.shot-cover #preview { width: 100vw; height: 100vh; object-fit: contain; box-shadow: none; background: #f7ead2; }
-body.shot-editor .app { height: calc(100vh - 90px); }
-body.shot-editor #preview { max-height: calc(100vh - 170px); object-fit: contain; }
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: #17101f;
+  color: #fff8ec;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+
+body.shot-cover { background: #f7efe2; }
+body.shot-cover header,
+body.shot-cover main,
+body.shot-cover footer { display: none; }
+body.shot-cover #shot-canvas {
+  display: block;
+  margin: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  background: linear-gradient(90deg, #2b0f3a, #7a1e4d 55%, #c65d21);
+  border-bottom: 3px solid #ffd98a;
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+
+.brand-mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: 'Anton', sans-serif;
+  font-size: 22px;
+  color: #2b0f3a;
+  background: radial-gradient(circle at 35% 30%, #ffe9a8, #ff9a3c 70%);
+  border: 2px solid #fff8ec;
+}
+
+.brand h1 {
+  margin: 0;
+  font-family: 'Anton', sans-serif;
+  font-size: 26px;
+  letter-spacing: 1px;
+  font-weight: 400;
+}
+
+.brand p { margin: 2px 0 0; font-size: 13px; color: #ffe9c9; }
+
+.top-actions { display: flex; gap: 8px; }
+
+button {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  letter-spacing: 1px;
+  color: #fff8ec;
+  background: rgba(255, 248, 236, 0.14);
+  border: 1px solid rgba(255, 248, 236, 0.45);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) { background: rgba(255, 248, 236, 0.28); }
+button:disabled { opacity: 0.4; cursor: default; }
+button.primary { background: #ff7a18; border-color: #ffd98a; color: #241028; }
+button.primary:hover { background: #ffa14d; }
+
+.studio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  padding: 18px 20px;
+  align-items: start;
+}
+
+.preview-pane { position: sticky; top: 12px; }
+
+.preview-wrap {
+  background: #241530;
+  border: 1px solid rgba(255, 217, 138, 0.35);
+  border-radius: 14px;
+  padding: 12px;
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+}
+
+#preview {
+  max-width: 100%;
+  max-height: calc(100vh - 220px);
+  border-radius: 6px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+  touch-action: none;
+}
+
+#preview:active { cursor: grabbing; }
+
+.hint {
+  margin: 10px 2px 0;
+  font-size: 14px;
+  color: #ffd98a;
+  min-height: 20px;
+}
+
+.controls { display: flex; flex-direction: column; gap: 14px; }
+
+.control-group {
+  background: #241530;
+  border: 1px solid rgba(255, 217, 138, 0.25);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.control-group h2 {
+  margin: 0 0 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 21px;
+  letter-spacing: 2px;
+  color: #ffd98a;
+  font-weight: 400;
+}
+
+.options { display: flex; flex-wrap: wrap; gap: 8px; }
+.options .option.active { background: #ff7a18; border-color: #ffd98a; color: #241028; }
+
+.tray { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+
+.tray-photo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  width: 108px;
+  text-align: center;
+}
+
+.tray-photo.selected { border-color: #ffd98a; background: rgba(255, 122, 24, 0.35); }
+.tray-photo img { width: 100%; height: 64px; object-fit: cover; border-radius: 4px; display: block; }
+.tray-photo span { font-size: 14px; }
+
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.upload-btn {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  letter-spacing: 1px;
+  background: rgba(255, 248, 236, 0.14);
+  border: 1px solid rgba(255, 248, 236, 0.45);
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.note { font-size: 13px; color: #d9c8ef; line-height: 1.5; margin: 10px 0 0; }
+
+.field { display: block; font-size: 13px; color: #d9c8ef; margin-bottom: 10px; }
+.field input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px 10px;
+  font-size: 15px;
+  color: #fff8ec;
+  background: #17101f;
+  border: 1px solid rgba(255, 217, 138, 0.4);
+  border-radius: 8px;
+}
+.field input:focus { outline: 2px solid #ff7a18; }
+
+.stickers { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; font-size: 14px; }
+.stickers label { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.stickers input { accent-color: #ff7a18; width: 16px; height: 16px; }
+
+.foot { padding: 8px 20px 20px; color: #9d8bb5; font-size: 12px; }
+.foot p { margin: 0; }
+
+#test-results {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #b6ffb6;
+  font: 13px/1.5 monospace;
+  padding: 10px;
+  max-width: 90vw;
+  white-space: pre-wrap;
+  z-index: 10;
+}
+
+@media (max-width: 900px) {
+  .studio { grid-template-columns: 1fr; }
+  .preview-pane { position: static; }
+}
